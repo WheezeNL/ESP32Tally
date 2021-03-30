@@ -17,4 +17,53 @@ The Web-Interface is available on http://192.168.4.1
 ## Etc.
 Developed on M5Atom, but without using their libraries so it could work on other ESP32-based boards, and probably even ESP8266.
 
-The Skaarhoj libraries are no longer updated, but the parts of the protocol we use in this project seem to still be working in the current ATEM Switchers 8.6 Update, 18 Feb 2021.
+The Skaarhoj libraries are no longer updated, but the parts of the protocol we use in this project seem to still be working in the current ATEM Switchers 8.6 Update, 18 Feb 2021.  
+For the Skaarhoj libraries to work on and ESP32, a few changes need to be made!  
+Modify the Skaarhoj library files for use with ESP32. (Source: oneguyoneblog.com)
+
+The library is compatible with Arduino (with Ethernet shield) and the ESP8266 (WiFi), but not with the ESP32. This is easily remedied by making a total of 3 changes to the two files ATEMbase.cpp and ATEMbase.h.
+
+In libraries/ATEMbase/ATEMbase.cpp, around line 50:
+
+Search for
+```
+	// Set up Udp communication object:
+#ifdef ESP8266
+WiFiUDP Udp;
+#else
+EthernetUDP Udp;
+#endif
+```
+and replace by:
+```
+	// Set up Udp communication object:
+WiFiUDP Udp;
+```
+ 
+
+In the second file, libraries/ATEMbase/ATEMbase.h, around line 35:
+```
+#ifdef ESP8266
+#include <WifiUDP.h>
+#else
+#include <EthernetUdp.h>
+#endif
+```
+replace this with the following line (mind the uppercase and lowercase):
+```
+ #include <WiFiUdp.h>
+```
+
+The second change in this file, around line 60, look for this snippet:
+```
+#ifdef ESP8266
+WiFiUDP _Udp;
+#else
+EthernetUDP _Udp;	// UDP object for communication, see constructor.
+#endif
+```
+and replace it with:
+```
+WiFiUDP _Udp;
+```
+You can now use the ATEM library in your ESP32 projects.
