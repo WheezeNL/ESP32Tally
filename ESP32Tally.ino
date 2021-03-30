@@ -233,27 +233,24 @@ void loop() {
     PreviewTallyPrevious = PreviewTally;
   }
 
-  if ( !digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500 && AtemSwitcher.isConnected() && allowAtemControl) {
-    
-    fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
-    FastLED.show();
-
-    //void changeProgramInput(uint16_t inputNumber);
-    AtemSwitcher.changeProgramInput(cameraNumber);
-    
-    // Check for packets, respond to them etc. Keeping the connection alive!
-    AtemSwitcher.runLoop();
-    
-    lastAtemUpdatePush = millis();
-
-  } else if (!digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500 && allowAtemControl) {
-    Serial.println("Button Pushed, but not connected to ATEM");
-    fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
-    FastLED.show();
-    lastAtemUpdatePush = millis();
-  } else if (!digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500) {
-    Serial.println("Button Pushed, but not allowed in GUI");
-    lastAtemUpdatePush = millis();
+  if ( !digitalRead(buttonpin)) {
+    if ((millis() - lastAtemUpdatePush) > 500 && AtemSwitcher.isConnected() && allowAtemControl) {
+      fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
+      FastLED.show();
+      //void changeProgramInput(uint16_t inputNumber);
+      AtemSwitcher.changeProgramInput(cameraNumber);
+      // Check for packets, respond to them etc. Keeping the connection alive!
+      AtemSwitcher.runLoop();
+      lastAtemUpdatePush = millis();
+    } else if ((millis() - lastAtemUpdatePush) > 500 && allowAtemControl) {
+      Serial.println("Button Pushed, but not connected to ATEM");
+      fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
+      FastLED.show();
+      lastAtemUpdatePush = millis();
+    } else if ((millis() - lastAtemUpdatePush) > 500) {
+      Serial.println("Button Pushed, but not allowed in GUI");
+      lastAtemUpdatePush = millis();
+    }
   }
   
   hue += 1;
