@@ -246,11 +246,13 @@ void loop() {
     
     lastAtemUpdatePush = millis();
 
-  } else if (!digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500) {
-    Serial.println("Button Pushed, but not connected to ATEM or control not allowed?");
+  } else if (!digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500 && allowAtemControl) {
+    Serial.println("Button Pushed, but not connected to ATEM");
     fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
     FastLED.show();
-
+    lastAtemUpdatePush = millis();
+  } else if (!digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500) {
+    Serial.println("Button Pushed, but not allowed in GUI");
     lastAtemUpdatePush = millis();
   }
   
