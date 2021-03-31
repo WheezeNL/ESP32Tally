@@ -18,8 +18,10 @@ The Web-Interface is available on http://192.168.4.1
 Developed on M5Atom, but without using their libraries so it could work on other ESP32-based boards, and probably even ESP8266.
 
 The Skaarhoj libraries are no longer updated, but the parts of the protocol we use in this project seem to still be working in the current ATEM Switchers 8.6 Update, 18 Feb 2021.  
+
+## Modify the Skaarhoj library files for use with ESP32. (Source: oneguyoneblog.com)
+
 For the Skaarhoj libraries to work on and ESP32, a few changes need to be made!  
-Modify the Skaarhoj library files for use with ESP32. (Source: oneguyoneblog.com)
 
 The library is compatible with Arduino (with Ethernet shield) and the ESP8266 (WiFi), but not with the ESP32. This is easily remedied by making a total of 3 changes to the two files ATEMbase.cpp and ATEMbase.h.
 
