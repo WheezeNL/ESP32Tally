@@ -34,6 +34,7 @@ ATEMstd AtemSwitcher;
 
 int cameraNumber = 0;
 bool allowAtemControl = false;
+bool allowAtemSetPreview = false;
 
 unsigned long lastAtemUpdate = millis();
 unsigned long lastAtemUpdatePush = millis();
@@ -178,7 +179,7 @@ void setup() {
   cameraNumber = WiFiSettings.integer("cameraID", 1, 9, 1, "Follow Camera Input");
 
   allowAtemControl = WiFiSettings.checkbox("allow_Atem_Control", false, "Allow Atem Control");
-
+  allowAtemSetPreview = WiFiSettings.checkbox("allow_Atem_Set_Preview", false, "Atem Set Preview on Control");
   WiFiSettings.onWaitLoop = []() {
     static CHSV color(0, 255, 255);
     color.hue++;
@@ -204,7 +205,7 @@ void loop() {
   if ( (millis() - lastAtemUpdate) > 100 ) {  // If lastAtemUpdate happened more then x seconds ago, AtemSwitcher.runLoop() will update the info in the AtemSwitcher. Might fail after 49.7 days.
     
     // Check for packets, respond to them etc. Keeping the connection alive!
-    AtemSwitcher.runLoop();
+    AtemSwitcher.runLoop();    
   
     lastAtemUpdate = millis();
   }
@@ -227,6 +228,7 @@ void loop() {
     } else if (!PreviewTally || !ProgramTally) { // If our camera != preview or program: do something else.
       showNumber(cameraNumber);
     }
+    Serial.println("Preview or Program changed"); // Testing
 
     // set previous state to current.
     ProgramTallyPrevious = ProgramTally;
@@ -234,20 +236,24 @@ void loop() {
   }
 
   if ( !digitalRead(buttonpin)) {
-    if ((millis() - lastAtemUpdatePush) > 500 && AtemSwitcher.isConnected() && allowAtemControl) {
+    if ((millis() - lastAtemUpdatePush) > 500 && AtemSwitcher.isConnected() && allowAtemControl && AtemSwitcher.getProgramInput() != cameraNumber) {
       fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
       FastLED.show();
       //void changeProgramInput(uint16_t inputNumber);
+      if (allowAtemSetPreview) {
+        AtemSwitcher.changePreviewInput(AtemSwitcher.getProgramInput());
+      }
       AtemSwitcher.changeProgramInput(cameraNumber);
       // Check for packets, respond to them etc. Keeping the connection alive!
-      AtemSwitcher.runLoop();
+      AtemSwitcher.runLoop(); // ToDo Does this command have to be here?
+      Serial.println("Button pushed, changed input and runLoop?"); // Testing
       lastAtemUpdatePush = millis();
-    } else if ((millis() - lastAtemUpdatePush) > 500 && allowAtemControl) {
+    } else if ((millis() - lastAtemUpdatePush) > 500 && allowAtemControl && AtemSwitcher.isConnected() == false) {
       Serial.println("Button Pushed, but not connected to ATEM");
       fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
       FastLED.show();
       lastAtemUpdatePush = millis();
-    } else if ((millis() - lastAtemUpdatePush) > 500) {
+    } else if ((millis() - lastAtemUpdatePush) > 500 && allowAtemControl == false) {
       Serial.println("Button Pushed, but not allowed in GUI");
       lastAtemUpdatePush = millis();
     }
