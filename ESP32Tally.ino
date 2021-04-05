@@ -1,4 +1,4 @@
-// This is a M5 Stack Atom based Tally Light.
+// This is a M5 Stack Atom based Tally Light made by Wheeze_NL.
 // Based on the work of SKAARHOJ, Juerd, F0x, and many others.
 
 // !!! Change the SkaarHoj libraries, Changes are in the Readme.
