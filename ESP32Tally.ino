@@ -31,6 +31,7 @@ int cameraNumber = 0;
 bool blShowPreview = false;
 bool blAtemControl = false;
 bool blAtemSetPreview = false;
+bool blDoCut = false;
 
 unsigned long lastAtemUpdate = millis();
 unsigned long lastAtemUpdatePush = millis();
@@ -212,6 +213,7 @@ void setup() {
   WiFiSettings.warning("Be carefull when giving this unit control-rights, as it may cause unintended switching to live in uncontrolled environments!", true);
   blAtemControl = WiFiSettings.checkbox("allow_Atem_Control", false, "Allow Remote Control?");  // Do you want to control the switcher from the ESP?
   blAtemSetPreview = WiFiSettings.checkbox("allow_Atem_Set_Preview", false, "Set previous Program as Preview?");  // Do you want to set the preview-input of the switcher, when you set this camera-input to program?
+  blDoCut = WiFiSettings.checkbox("allow_Atem_Do_Cut", false, "Button push performs CUT. Control and Preview disabled in this M5Stack");  // When the button is pushed, live and preview will switch.
 
   switcherIp.fromString(switchIpstring);  // Set the saved IP as the object needed by the library to connect.
 
@@ -244,6 +246,7 @@ void loop() {
     // Check for packets, respond to them etc. Keeping the connection alive!
     AtemSwitcher.runLoop();    
     lastAtemUpdate = millis();
+    int lastProgram = currentProgram;
     currentProgram = AtemSwitcher.getProgramInput();
     currentPreview = AtemSwitcher.getPreviewInput();
     commandSend = false;
@@ -258,14 +261,30 @@ void loop() {
       newState = IDLE;
     }
 
-    if ( newState != state ) {
+    if (currentProgram != lastProgram && blDoCut) {
+      Serial.println("Program changed, updating number in display"); // Testing
+      showNumber(currentProgram);
+      hue = 0;
+    }
+
+    if ( newState != state && !blDoCut ) {
       Serial.println("state changed"); // Testing
       changeState(newState);
       }
   }
 
-  if ( !digitalRead(buttonpin)) {
-    if ((millis() - lastAtemUpdatePush) > 500 && AtemSwitcher.isConnected() && blAtemControl && AtemSwitcher.getProgramInput() != cameraNumber) {
+  if ( !digitalRead(buttonpin) && (millis() - lastAtemUpdatePush) > 500 ) {
+    if (AtemSwitcher.isConnected() && blAtemControl && blDoCut) {
+      fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
+      FastLED.show();
+      //void changeProgramInput(uint16_t inputNumber);
+      AtemSwitcher.runLoop();
+      AtemSwitcher.doCut();
+      // Check for packets, respond to them etc. Keeping the connection alive!
+      AtemSwitcher.runLoop();
+      Serial.println("Button pushed, did a doCut"); // Testing
+      lastAtemUpdatePush = millis();
+    } else if (AtemSwitcher.isConnected() && blAtemControl && AtemSwitcher.getProgramInput() != cameraNumber) {
       fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
       FastLED.show();
       //void changeProgramInput(uint16_t inputNumber);
@@ -277,16 +296,18 @@ void loop() {
       AtemSwitcher.runLoop();
       Serial.println("Button pushed, changed input and runLoop?"); // Testing
       lastAtemUpdatePush = millis();
-    } else if ((millis() - lastAtemUpdatePush) > 500 && blAtemControl && AtemSwitcher.isConnected() == false) {
+    } else if (blAtemControl && AtemSwitcher.isConnected() == false) {
       Serial.println("Button Pushed, but not connected to ATEM");
       fill_solid(leds, numleds, CRGB(0,0,255));  // fill Blue
       FastLED.show();
       lastAtemUpdatePush = millis();
-    } else if ((millis() - lastAtemUpdatePush) > 500 && blAtemControl == false) {
+    } else if (blAtemControl == false) {
       Serial.println("Button Pushed, but not allowed in GUI");
       lastAtemUpdatePush = millis();
     }
   }
   
-  hue += 1;
+  if (!blDoCut) {
+    hue += 1;
+  }
 }
